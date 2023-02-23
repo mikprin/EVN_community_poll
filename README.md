@@ -39,7 +39,7 @@ GLOBAL_DATABASE_LOCK = "_global_database_lock_"
 
 For storing some user data you can use `{user}_conversation` as a key for conversation with a user. For example, if user with id `123` is in conversation with bot, you can store his data in `123_conversation` key.
 
-```python
+
 
 
 # Requirements
