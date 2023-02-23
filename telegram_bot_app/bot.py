@@ -85,6 +85,7 @@ def send_welcome(message):
         redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
     logging.info(f"User with nickname {user_info['user_username']} started the bot.")
     bot.reply_to(message, msgs.welcome_msg)
+    bot.send_message(message.chat.id, msgs.values)
 
     
 
