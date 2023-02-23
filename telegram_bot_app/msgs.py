@@ -1,3 +1,7 @@
+from telebot.util import quick_markup
+from telebot.types import InlineKeyboardButton
+import json
+
 welcome_msg = """Привет! 
 Спасибо, что пришли!
 Начнём с небольшого опроса. Он нужен нам для доморощенного
@@ -20,4 +24,32 @@ values = """
 11. **Человечество** — совокупность всех людей (здесь не было бы определения, но OCD).
 """
 
+welcome_msg = """Welcome!"""
+
 creator_info = """Creator"""
+
+answers = [
+    'answer 1',
+    'answer 2',
+    'answer 3',
+    'answer 4',
+    'answer 5',
+    'answer 6',
+    'answer 7',
+    'answer 8',
+    'answer 9',
+    'answer 10',
+]
+
+poll = quick_markup(
+    {
+        answer: {'callback_data': json.dumps({'type': 'answer', 'data': key})}
+        for key, answer
+        in enumerate(answers)
+    },
+    row_width=1
+).add(
+    InlineKeyboardButton(text='Clear', callback_data='clear'),
+    InlineKeyboardButton(text='Send', callback_data='ok'),
+    row_width=2
+)

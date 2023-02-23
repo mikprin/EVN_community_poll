@@ -8,6 +8,8 @@ import redis
 
 from aiogram import Bot, Dispatcher, executor, types
 # import telebot
+import json
+from typing import cast
 
 
 # Local imports
@@ -94,11 +96,29 @@ async def send_welcome(message):
     await message.reply(msgs.welcome_msg)
     await message.reply(msgs.values)
 
-    
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    user_info = get_user_info(message)
+    database_user_key = f"user_{user_info['user_id']}"
+    if not redis_tools.check_if_user_exists(redis_connection, database_user_key, redis_tools.ALL_USERS):
+        redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
+    logging.info(f"User with nickname {user_info['user_username']} started the bot.")
+    bot.reply_to(message, msgs.welcome_msg, reply_markup=msgs.poll)
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    data = json.loads(call.data)
+    chat_id = cast(telebot.types.Chat, call['message']['chat']).id
+    message_id = call['message']['message_id']
+    keyboard = cast(telebot.types.InlineKeyboardMarkup, call['message']['reply_markup'])
+    keyboard.add(telebot.types.InlineKeyboardButton('sd'))
+    if data['type'] == 'answer':
+        print(data, call)
+        bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyboard)
+
 
 ### ADD YOUR ENDPOINTS HERE ###
-    
-    
+
 # Start the bot
 
 if __name__ == '__main__':
