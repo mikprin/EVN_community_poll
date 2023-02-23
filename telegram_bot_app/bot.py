@@ -4,7 +4,10 @@ CLEANUP_INTERVAL = 60*60
 # Importing libraries
 import logging, dotenv, os, sys, threading, time
 import redis
-import telebot
+
+
+from aiogram import Bot, Dispatcher, executor, types
+# import telebot
 
 
 # Local imports
@@ -69,23 +72,27 @@ def get_user_info(message):
 
 # Telegram bot
 telegram_token = os.getenv("TELEGRAM_API_KEY")
-logger = telebot.logger
-telebot.logger.setLevel(logging.WARNING) # Outputs debug messages to console.
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
-bot = telebot.TeleBot(telegram_token, parse_mode=None) # You can set parse_mode by default. HTML or MARKDOWN
+# Initialize bot and dispatcher
 
+bot = Bot(token=telegram_token)
+
+dp = Dispatcher(bot)
 
 # Ready to describe the endpoints
 
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
+@dp.message_handler(commands=['start', 'help'])
+async def send_welcome(message):
     user_info = get_user_info(message)
     database_user_key = f"user_{user_info['user_id']}"
     if not redis_tools.check_if_user_exists(redis_connection, database_user_key, redis_tools.ALL_USERS):
         redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
+
     logging.info(f"User with nickname {user_info['user_username']} started the bot.")
-    bot.reply_to(message, msgs.welcome_msg)
-    bot.send_message(message.chat.id, msgs.values)
+    await message.reply(msgs.welcome_msg)
+    await message.reply(msgs.values)
 
     
 
@@ -93,4 +100,6 @@ def send_welcome(message):
     
     
 # Start the bot
-bot.infinity_polling()
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)

@@ -1,3 +1,4 @@
 python-dotenv
-pyTelegramBotAPI
+aiogram
+# pyTelegramBotAPI
 redis
