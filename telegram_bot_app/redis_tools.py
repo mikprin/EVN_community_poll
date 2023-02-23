@@ -26,7 +26,7 @@ def set_last_interaction(redis_connection, user, timestamp):
 def delete_interactions(redis_connection, user):
     """Delete interactions for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        redis_connection.delete(f"{user}_last_interaction")
-        redis_connection.delete(f"{user}_conversation")
+        # redis_connection.delete(f"{user}_last_interaction")
+        # redis_connection.delete(f"{user}_conversation")
         redis_connection.lrem(ALL_USERS, 0, user)
 
