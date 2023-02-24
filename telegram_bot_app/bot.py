@@ -106,7 +106,7 @@ async def callback_query(call):
         ]
         max_selected = max(selected)
         if data['type'] == 'poll_answer':
-            if max_selected >= 6:
+            if max_selected >= 5:
                 return
             key = data['key']
             new_button = keyboard[key][0]
@@ -131,7 +131,7 @@ async def callback_query(call):
             keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
             await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
         elif data['type'] == 'poll_ok':
-            if max_selected < 6: # we need to change it to 3. And maybe then add to 6 if lower than 6.
+            if max_selected < 5:
                 return
             result = [(key, val) for key, val in enumerate(selected) if val != 0]
             result.sort(key=lambda x: x[1])
