@@ -204,7 +204,9 @@ async def create_groups_of_different(message):
     humans_per_group = 3
     
     target_groups = int(num_of_users/humans_per_group)
-    num_of_clusters = target_groups * humans_per_group
+    # num_of_clusters = target_groups * humans_per_group
+    num_of_clusters = target_groups * 2
+    
     await message.reply(f'Number of users: {num_of_users}\nTarget groups: {target_groups}\n\
         humans per group: {humans_per_group}\n\
         Number of clusters: {num_of_clusters}')
@@ -223,15 +225,25 @@ async def create_groups_of_different(message):
     # Save group numbers to redis
     
     for user in sorted_users:
-        redis_tools.save_user_group(redis_connection, user, sorted_users[user])
+        redis_tools.save_user_group(redis_connection, user, sorted_users[user], redis_tools.FIRST_POLL)
 
     # Send messages to users with their group number
     
     for user in sorted_users:
         group_number = sorted_users[user]
         chat_id = redis_tools.get_user_chat_id(redis_connection, user)
-        await bot.send_message(chat_id, f'Ваш номер группы: {group_number}')
+        await bot.send_message(chat_id, f'Ваш кластер: {group_number}')
     
+    await message.reply('Users notified about their group number.')
+
+@dp.message_handler(commands=['notify_groups__poll_1'])
+async def notify_group_1(message):
+    users = redis_tools.get_all_poll_results(redis_connection)
+    for user in users:
+        chat_id = redis_tools.get_user_chat_id(redis_connection, user)
+        number = redis_tools.read_user_group(redis_connection, user, redis_tools.FIRST_POLL)
+        if number:
+            await bot.send_message(chat_id, f'Повторно!\nВаш номер группы: {number}')
     await message.reply('Users notified about their group number.')
 
 @dp.message_handler(commands=['group_2'])
@@ -245,7 +257,8 @@ async def create_groups_of_similar(message):
 @dp.message_handler(commands=['/changeteamto'])
 async def change_team(message):
     '''Changes user's team to group N'''
-    pass
+    user = message['from']['username']
+    
 
 @dp.message_handler(commands=['add_variant'])
 async def add_variant(message):

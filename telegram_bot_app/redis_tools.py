@@ -65,7 +65,7 @@ def delete_interactions(redis_connection, user):
 def save_polling_result(redis_connection, user, result: list[int]):
     """Save polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        if not redis_connection.exists(f"{user}_init_polling"):
+        if redis_connection.exists(f"{user}_init_polling"):
             redis_connection.delete(f"{user}_init_polling")
         for i in result:
             redis_connection.rpush(f"{user}_init_polling", i)
@@ -118,14 +118,14 @@ def get_all_poll_results(redis_connection):
 def save_user_group(redis_connection, user, group, collection):
     """Save user group"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        redis_connection.set(f"{user}{collection}", group)
+        redis_connection.set(f"{user}{collection}", str(group))
 
 def read_user_group(redis_connection, user, collection):
     """Read user group"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         res = redis_connection.get(f"{user}{collection}")
         if res:
-            group = res.decode("utf-8")
+            group = int(res.decode("utf-8"))
             return group
         else:
             return None
