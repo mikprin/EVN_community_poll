@@ -5,6 +5,8 @@ ALL_USERS = "_telegram_users_"
 VARIANTS = "_variants_"
 GLOBAL_DATABASE_LOCK = "_global_database_lock_"
 INTERACTION_TIMEOUT = 172800
+FIRST_POLL = "_first_poll_group_"
+
 
 # Functions
 def add_user_to_group(redis_connection, user, collection):
@@ -55,8 +57,10 @@ def delete_interactions(redis_connection, user):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         # redis_connection.delete(f"{user}_last_interaction")
         # redis_connection.delete(f"{user}_conversation")
+        redis_connection.delete(f"{user}_chat_id")
         redis_connection.lrem(ALL_USERS, 0, user)
         redis_connection.delete(f"{user}_init_polling")
+        redis_connection.delete(f"{user}{FIRST_POLL}")
 
 def save_polling_result(redis_connection, user, result: list[int]):
     """Save polling result for user"""
@@ -105,5 +109,23 @@ def get_all_poll_results(redis_connection):
         users = [x.decode("utf-8") for x in redis_connection.lrange(ALL_USERS, 0, -1)]
     result = {}
     for user in users:
-        result[user] = get_user_results(redis_connection, user)
+        user_poll = get_user_results(redis_connection, user)
+        if user_poll != []:
+            result[user] = get_user_results(redis_connection, user)
     return result
+
+
+def save_user_group(redis_connection, user, group, collection):
+    """Save user group"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.set(f"{user}{collection}", group)
+
+def read_user_group(redis_connection, user, collection):
+    """Read user group"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        res = redis_connection.get(f"{user}{collection}")
+        if res:
+            group = res.decode("utf-8")
+            return group
+        else:
+            return None

@@ -11,6 +11,7 @@ import json
 # Local imports
 import msgs
 import redis_tools
+import magic
 
 # Logging
 import logging.handlers
@@ -189,8 +190,49 @@ async def create_groups_of_different(message):
     Admin command.
     Cluster all users into groups of different users, send each of them their group number.
     '''
-    usernames = redis_tools.get_users(redis_connection)
-    await message.reply('All users: ' + ', '.join(usernames))
+    usernames = redis_tools.get_all_users(redis_connection)
+    # await message.reply('All users: ' + ', '.join(usernames))
+
+    # Get poll results
+    users = redis_tools.get_all_poll_results(redis_connection)
+    
+    await message.reply(f'All users answers:\n {users}\n starting clustering...')
+    
+    num_of_users = len(users.keys())
+    
+    # Users per group
+    humans_per_group = 3
+    
+    target_groups = int(num_of_users/humans_per_group)
+    num_of_clusters = target_groups * humans_per_group
+    await message.reply(f'Number of users: {num_of_users}\nTarget groups: {target_groups}\n\
+        humans per group: {humans_per_group}\n\
+        Number of clusters: {num_of_clusters}')
+    
+    cluster_assignments = magic.cluster_vectors(list(users.values()), num_of_clusters)
+    
+    clustered_users = magic.cluster_users(users, num_of_clusters)
+    user_clusters = magic.create_user_clusters(users, num_of_clusters)
+    
+    await message.reply(f'User clusters: {user_clusters}')
+    
+    await message.reply(f'Int results:\n{ magic.print_clusters(list(users.values()),cluster_assignments , print_flag = False )}')
+    
+    sorted_users = clustered_users.copy()
+    
+    # Save group numbers to redis
+    
+    for user in sorted_users:
+        redis_tools.save_user_group(redis_connection, user, sorted_users[user])
+
+    # Send messages to users with their group number
+    
+    for user in sorted_users:
+        group_number = sorted_users[user]
+        chat_id = redis_tools.get_user_chat_id(redis_connection, user)
+        await bot.send_message(chat_id, f'Ваш номер группы: {group_number}')
+    
+    await message.reply('Users notified about their group number.')
 
 @dp.message_handler(commands=['group_2'])
 async def create_groups_of_similar(message):
