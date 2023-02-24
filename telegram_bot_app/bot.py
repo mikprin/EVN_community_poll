@@ -96,7 +96,7 @@ async def send_welcome(message):
         redis_tools.save_user_chat_id(redis_connection, database_user_key, chat_id)
     logging.info(f"User with nickname {user_info['user_username']} started the bot.")
     await message.reply(msgs.welcome_msg)
-    await message.reply(msgs.values, reply_markup=msgs.go_next_btn(0))
+    await message.reply(msgs.steps[0], reply_markup=msgs.go_next_btn(0))
 
 
 @dp.callback_query_handler()
@@ -149,7 +149,13 @@ async def callback_query(call):
             print(f"User with nickname {username} finished the poll. Result: {result}")
             await bot.send_message(chat_id, msgs.after_poll_msg)
     elif data['type'] == 'steps':
-        if data['step'] == 0:
+        if data['step'] + 1 < len(msgs.steps):
+            await bot.send_message(
+                chat_id,
+                msgs.steps[data['step'] + 1],
+                reply_markup=msgs.go_next_btn(data['step'] + 1)
+            )
+        else:
             await bot.send_message(chat_id, msgs.poll_msg, reply_markup=msgs.poll)
     elif data['type'].startswith('variant_'):
         keyboard = call['message']['reply_markup']['inline_keyboard']
