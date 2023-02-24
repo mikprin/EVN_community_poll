@@ -33,7 +33,7 @@ def calculate_distances(p1,p2):
     return distance
 
 def cluster_vectors(vectors, clusters):
-
+    
     # Define number of clusters
     M = clusters
 
@@ -67,6 +67,8 @@ def cluster_vectors(vectors, clusters):
 
 
 def cluster_users(users, clusters):
+    '''Cluster with k-means. Output is a dictionary:
+    user: cluster'''
     vectors = list(users.values())
     cluster_assignments = cluster_vectors(vectors, clusters)
     i = 0
@@ -76,6 +78,17 @@ def cluster_users(users, clusters):
         # print(f"{user} {cluster_assignments[i]}")
         i += 1
     return clustered_users
+
+def create_user_clusters(users, clusters):
+    '''Cluster with k-means. Output is a dictionary:
+    cluster: [users]'''
+    clustered_users = cluster_users(users, clusters)
+    user_clusters = {}
+    for user in clustered_users:
+        if not clustered_users[user] in user_clusters:
+            user_clusters[clustered_users[user]] = []
+        user_clusters[clustered_users[user]].append(user)
+    return user_clusters
 
 def print_clusters(vectors, cluster_assignments):
     # Print clusters
