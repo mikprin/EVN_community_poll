@@ -91,9 +91,11 @@ async def send_welcome(message):
 
     logging.info(f"User with nickname {user_info['user_username']} started the bot.")
     await message.reply(msgs.welcome_msg)
-    await message.reply(msgs.values, reply_markup=msgs.poll)
+    await message.reply(msgs.values)
 
-
+@dp.message_handler(commands=['poll'])
+async def send_poll(message):
+    await message.reply(msgs.poll_msg, reply_markup=msgs.poll)
 
 @dp.callback_query_handler()
 async def callback_query(call):
@@ -139,7 +141,7 @@ async def callback_query(call):
         user_info = get_user_info(call['message'])
         database_user_key = f"user_{user_info['user_id']}"
         #redis_tools.save_polling_result(redis_connection, database_user_key, [val[0] for val in result])
-        await bot.send_message(chat_id, json.dumps([val[0] for val in result]))
+        await bot.send_message(chat_id, msgs.after_poll_msg)
 
 ### ADD YOUR ENDPOINTS HERE ###
 
