@@ -79,6 +79,9 @@ bot = Bot(token=telegram_token)
 
 dp = Dispatcher(bot)
 
+def broadcast():
+    pass
+
 # Ready to describe the endpoints
 
 @dp.message_handler(commands=['start', 'help'])
@@ -153,13 +156,29 @@ async def callback_query(call):
             btn_data = json.loads(btn_to_switch['callback_data'])
             btn_data['selected'] = not btn_data['selected']
             if btn_data['selected']:
-                btn_to_switch['text'] = '✅ '  +btn_to_switch['text']
+                btn_to_switch['text'] = '✅ ' + btn_to_switch['text']
             else:
                 btn_to_switch['text'] = btn_to_switch['text'].removeprefix('✅ ')
             btn_to_switch['callback_data'] = json.dumps(btn_data)
             keyboard[key][0] = btn_to_switch
             keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
             await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
+        elif data['type'] == 'variant_ok':
+            selected = [
+                btn[0]['text'].removeprefix('✅ ')
+                for btn in keyboard
+                if json.loads(btn[0]['callback_data']).get('selected', False)
+            ]
+            await bot.send_message(
+                chat_id,
+                'Done!\nSend poll with variants to everyone?',
+                reply_markup=types.InlineKeyboardMarkup(inline_keyboard=[[{
+                    'text': 'Send',
+                    'callback_data': json.dumps({'type': 'broadcast_poll_2'})
+                }]])
+            )
+    elif data['type'] == 'broadcast_poll_2':
+        pass
 
 @dp.message_handler(commands=['group_1'])
 async def create_groups_of_different(message):
@@ -207,11 +226,13 @@ async def get_variants(message):
                 }]
                 for key, item in enumerate(variants)
             ]
+        ).row(
+            types.InlineKeyboardButton(
+                'Confirm selection',
+                callback_data=json.dumps({'type': 'variant_ok'})
+            )
         )
     )
-
-def broadcast():
-    pass
 
 @dp.message_handler(commands=['show_results'])
 async def show_results(message):
