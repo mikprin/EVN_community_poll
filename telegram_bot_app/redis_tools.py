@@ -40,7 +40,7 @@ def delete_interactions(redis_connection, user):
 def save_polling_result(redis_connection, user, result: list[int]):
     """Save polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        if not redis_connection.exists(f"{user}_init_polling"):
+        if redis_connection.exists(f"{user}_init_polling"):
             redis_connection.delete(f"{user}_init_polling")
         for i in result:
             redis_connection.rpush(f"{user}_init_polling", i)
@@ -68,7 +68,7 @@ def get_variants(redis_connection):
 
 def save_final_variants(redis_connection, variants: list[str]):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        if not redis_connection.exists("final_variants"):
+        if redis_connection.exists("final_variants"):
             redis_connection.delete("final_variants")
         for i in variants:
             redis_connection.rpush("final_variants", i)
