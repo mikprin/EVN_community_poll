@@ -72,7 +72,7 @@ def get_all_poll_results(redis_connection):
     """Get all polling results"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         users = [x.decode("utf-8") for x in redis_connection.lrange(ALL_USERS, 0, -1)]
-        result = {}
-        for user in users:
-            result[user] = get_user_results(redis_connection, user)
-        return result
+    result = {}
+    for user in users:
+        result[user] = get_user_results(redis_connection, user)
+    return result
