@@ -1,3 +1,6 @@
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+import json
+
 welcome_msg = """Привет! 
 Спасибо, что пришли!
 Начнём с небольшого опроса. Он нужен нам для доморощенного
@@ -20,4 +23,40 @@ values = """
 11. **Человечество** — совокупность всех людей (здесь не было бы определения, но OCD).
 """
 
+welcome_msg = """Welcome!"""
+
 creator_info = """Creator"""
+
+poll_msg = """Выберите и расставьте по порядку **от 3 до 6** из этих общностей, которые играют в вашей жизни наиболее важную роль — те, частью которых вы чаще себя ощущаете, о которых чаще думаете, принадлежность к которым сильнее всего влияет на ваши решения."""
+
+after_poll_msg = """Супер!
+Теперь мы зададим несколько вопросов про каждую из них."""
+
+answers = [
+    'Семья',
+    'Организация',
+    'Локальное сообщество',
+    'Сообщество по интересам',
+    'Социальное окружение',
+    'Профессиональное сообщество',
+    'Социальный класс',
+    'Гражданская нация',
+    'Культурно-языковая общность',
+    'Мировоззрение',
+    'Человечество'
+]
+
+btns = [
+    InlineKeyboardButton(
+        btn,
+        callback_data=json.dumps({'type': 'answer', 'key': key, 'selected': 0})
+    )
+    for key, btn in enumerate(answers)
+]
+
+poll = InlineKeyboardMarkup(row_width=1).add(
+    *btns
+).row(
+    InlineKeyboardButton(text='Clear', callback_data=json.dumps({'type': 'clear'})),
+    InlineKeyboardButton(text='Send', callback_data=json.dumps({'type': 'ok'})),
+)
