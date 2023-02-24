@@ -18,6 +18,11 @@ def check_if_user_exists(redis_connection, user, collection):
         return True
     return False
 
+def remove_user_from_group(redis_connection, user, collection):
+    """Remove user from redis"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.lrem(collection, 0, user)
+
 def set_last_interaction(redis_connection, user, timestamp):
     """Set last interaction timestamp for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
@@ -29,4 +34,14 @@ def delete_interactions(redis_connection, user):
         # redis_connection.delete(f"{user}_last_interaction")
         # redis_connection.delete(f"{user}_conversation")
         redis_connection.lrem(ALL_USERS, 0, user)
+        redis_connection.lpop(f"{user}_init_polling")
 
+def save_polling_result(redis_connection, user, result: list[int]):
+    """Save polling result for user"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.rpush(f"{user}_init_polling", result)
+
+def remove_user_results(redis_connection, user):
+    """Remove polling result for user"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.lpop(f"{user}_init_polling")
