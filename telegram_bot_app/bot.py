@@ -193,9 +193,6 @@ async def callback_query(call):
                 await bot.send_message(
                     user_chat_id, 'Choose 3 variants', reply_markup=variants_keyboard
                 )
-        #await bot.send_message(
-        #    chat_id, 'Choose variants', reply_markup=variants_keyboard
-        #)
     elif data['type'].startswith('poll2_'):
         keyboard = call['message']['reply_markup']['inline_keyboard']
         selected = [
