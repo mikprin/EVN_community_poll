@@ -91,11 +91,8 @@ async def send_welcome(message):
 
     logging.info(f"User with nickname {user_info['user_username']} started the bot.")
     await message.reply(msgs.welcome_msg)
-    await message.reply(msgs.values)
+    await message.reply(msgs.values, reply_markup=msgs.go_next_btn(0))
 
-@dp.message_handler(commands=['poll'])
-async def send_poll(message):
-    await message.reply(msgs.poll_msg, reply_markup=msgs.poll)
 
 @dp.callback_query_handler()
 async def callback_query(call):
@@ -134,21 +131,20 @@ async def callback_query(call):
         keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
         await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
     elif data['type'] == 'ok':
+        if max_selected < 3:
+            return
         result = [(key, val) for key, val in enumerate(selected) if val != 0]
         result.sort(key=lambda x: x[1])
-        if max_selected < 6:
-            return
-
-        # this is not working !!!
-        # username = call.message.from_user.username
-        # 
-        username = call.message.from_user.username
+        username = call['from']['username']
         database_user_key = f"{username}"
         result_to_save = [val[0] for val in result]
         redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
         logging.info(f"User with nickname {username} finished the poll. Result: {result}")
         print(f"User with nickname {username} finished the poll. Result: {result}")
         await bot.send_message(chat_id, msgs.after_poll_msg)
+    elif data['type'] == 'steps':
+        if data['step'] == 0:
+            await bot.send_message(chat_id, msgs.poll_msg, reply_markup=msgs.poll)
 
 ### ADD YOUR ENDPOINTS HERE ###
 
@@ -156,7 +152,7 @@ async def callback_query(call):
 @dp.message_handler(commands=['show_results'])
 async def show_results(message):
     user_info = get_user_info(message)
-    database_user_key = f"{user_info['user_id']}".strip()
+    database_user_key = f"{user_info['user_username']}".strip()
     if not redis_tools.check_if_user_exists(redis_connection, database_user_key, redis_tools.ALL_USERS):
         redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
     poll_results = redis_tools.get_user_results(redis_connection, database_user_key)

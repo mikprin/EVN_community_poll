@@ -60,3 +60,11 @@ poll = InlineKeyboardMarkup(row_width=1).add(
     InlineKeyboardButton(text='Clear', callback_data=json.dumps({'type': 'clear'})),
     InlineKeyboardButton(text='Send', callback_data=json.dumps({'type': 'ok'})),
 )
+
+def go_next_btn(step: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton(
+            text='Go next',
+            callback_data=json.dumps({'type': 'steps', 'step': step})
+        )
+    )
