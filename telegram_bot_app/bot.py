@@ -129,8 +129,8 @@ async def callback_query(call):
                 callback_data['selected'] = 0
                 button[0]['callback_data'] = json.dumps(callback_data)
             new_keyboard.append(button)
-            keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-            await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
+        keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+        await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
     elif data['type'] == 'ok':
         result = [(key, val) for key, val in enumerate(selected) if val != 0]
         result.sort(key=lambda x: x[1])
@@ -138,7 +138,7 @@ async def callback_query(call):
             return
         user_info = get_user_info(call['message'])
         database_user_key = f"user_{user_info['user_id']}"
-        redis_tools.save_polling_result(redis_connection, database_user_key, [val[0] for val in result])
+        #redis_tools.save_polling_result(redis_connection, database_user_key, [val[0] for val in result])
         await bot.send_message(chat_id, json.dumps([val[0] for val in result]))
 
 ### ADD YOUR ENDPOINTS HERE ###
