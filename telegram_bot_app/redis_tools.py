@@ -93,6 +93,10 @@ def get_variants(redis_connection):
         res = [ x.decode("utf-8") for x in redis_connection.lrange(VARIANTS, 0, -1)]
     return res
 
+def remove_variants(redis_connection):
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.delete(VARIANTS)
+
 def save_final_variants(redis_connection, variants: list[str]):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         if redis_connection.exists("final_variants"):
@@ -105,15 +109,15 @@ def get_final_variants(redis_connection):
         res = [ x.decode("utf-8") for x in redis_connection.lrange("final_variants", 0, -1)]
         return res
 
-def get_all_poll_results(redis_connection):
+def get_all_poll_results(redis_connection, collection="init"):
     """Get all polling results"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         users = [x.decode("utf-8") for x in redis_connection.lrange(ALL_USERS, 0, -1)]
     result = {}
     for user in users:
-        user_poll = get_user_results(redis_connection, user)
+        user_poll = get_user_results(redis_connection, user, collection)
         if user_poll != []:
-            result[user] = get_user_results(redis_connection, user)
+            result[user] = get_user_results(redis_connection, user, collection)
     return result
 
 
