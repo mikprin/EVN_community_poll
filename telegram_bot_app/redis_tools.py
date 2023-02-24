@@ -62,13 +62,15 @@ def delete_interactions(redis_connection, user):
         redis_connection.delete(f"{user}_init_polling")
         redis_connection.delete(f"{user}{FIRST_POLL}")
 
-def save_polling_result(redis_connection, user, result: list[int]):
+def save_polling_result(redis_connection, user, result: list[int], key: str = 'init'):
     """Save polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        if redis_connection.exists(f"{user}_init_polling"):
-            redis_connection.delete(f"{user}_init_polling")
+
+        if redis_connection.exists(f"{user}_{key}_polling"):
+            redis_connection.delete(f"{user}_{key}_polling")
+
         for i in result:
-            redis_connection.rpush(f"{user}_init_polling", i)
+            redis_connection.rpush(f"{user}_{key}_polling", i)
 
 def remove_user_results(redis_connection, user):
     """Remove polling result for user"""
