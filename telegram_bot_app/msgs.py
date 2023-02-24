@@ -1,5 +1,4 @@
-from telebot.util import quick_markup
-from telebot.types import InlineKeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import json
 
 welcome_msg = """Привет! 
@@ -41,15 +40,17 @@ answers = [
     'answer 10',
 ]
 
-poll = quick_markup(
-    {
-        answer: {'callback_data': json.dumps({'type': 'answer', 'data': key})}
-        for key, answer
-        in enumerate(answers)
-    },
-    row_width=1
-).add(
-    InlineKeyboardButton(text='Clear', callback_data='clear'),
-    InlineKeyboardButton(text='Send', callback_data='ok'),
-    row_width=2
+btns = [
+    InlineKeyboardButton(
+        btn,
+        callback_data=json.dumps({'type': 'answer', 'key': key, 'selected': 0})
+    )
+    for key, btn in enumerate(answers)
+]
+
+poll = InlineKeyboardMarkup(row_width=1).add(
+    *btns
+).row(
+    InlineKeyboardButton(text='Clear', callback_data=json.dumps({'type': 'clear'})),
+    InlineKeyboardButton(text='Send', callback_data=json.dumps({'type': 'ok'})),
 )
