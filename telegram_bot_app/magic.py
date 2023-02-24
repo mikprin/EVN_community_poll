@@ -108,10 +108,16 @@ def create_user_clusters(users, clusters):
         user_clusters[clustered_users[user]].append(user)
     return user_clusters
 
-def print_clusters(vectors, cluster_assignments):
-    # Print clusters
+def print_clusters(vectors, cluster_assignments, print_flag=True):
+    # Print clusters and return string
+    s = ""
     for i in range(max(cluster_assignments)+1):
-        print(f"Cluster {i}:")
+        s += f"Cluster {i}:"
+        if print_flag:
+            print(f"Cluster {i}:")
     for j in range(len(vectors)):
         if cluster_assignments[j] == i:
-            print(f"  {vectors[j]}")
+            s += f"  {vectors[j]}"
+            if print_flag:
+                print(f"  {vectors[j]}")
+            
