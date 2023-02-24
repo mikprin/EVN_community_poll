@@ -85,7 +85,7 @@ dp = Dispatcher(bot)
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message):
     user_info = get_user_info(message)
-    database_user_key = f"user_{user_info['user_id']}"
+    database_user_key = f"{user_info['user_username']}".strip()
     if not redis_tools.check_if_user_exists(redis_connection, database_user_key, redis_tools.ALL_USERS):
         redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
 
@@ -138,12 +138,29 @@ async def callback_query(call):
         result.sort(key=lambda x: x[1])
         if max_selected < 6:
             return
-        user_info = get_user_info(call['message'])
-        database_user_key = f"user_{user_info['user_id']}"
-        #redis_tools.save_polling_result(redis_connection, database_user_key, [val[0] for val in result])
+
+        # this is not working !!!
+        # username = call.message.from_user.username
+        # 
+        username = call.message.from_user.username
+        database_user_key = f"{username}"
+        result_to_save = [val[0] for val in result]
+        redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
+        logging.info(f"User with nickname {username} finished the poll. Result: {result}")
+        print(f"User with nickname {username} finished the poll. Result: {result}")
         await bot.send_message(chat_id, msgs.after_poll_msg)
 
 ### ADD YOUR ENDPOINTS HERE ###
+
+
+@dp.message_handler(commands=['show_results'])
+async def show_results(message):
+    user_info = get_user_info(message)
+    database_user_key = f"{user_info['user_id']}".strip()
+    if not redis_tools.check_if_user_exists(redis_connection, database_user_key, redis_tools.ALL_USERS):
+        redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
+    poll_results = redis_tools.get_user_results(redis_connection, database_user_key)
+    await message.reply(str(poll_results))
 
 # Start the bot
 

@@ -34,14 +34,22 @@ def delete_interactions(redis_connection, user):
         # redis_connection.delete(f"{user}_last_interaction")
         # redis_connection.delete(f"{user}_conversation")
         redis_connection.lrem(ALL_USERS, 0, user)
-        redis_connection.lpop(f"{user}_init_polling")
+        redis_connection.delete(f"{user}_init_polling")
 
 def save_polling_result(redis_connection, user, result: list[int]):
     """Save polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        redis_connection.rpush(f"{user}_init_polling", result)
+        for i in result:
+            redis_connection.rpush(f"{user}_init_polling", i)
 
 def remove_user_results(redis_connection, user):
     """Remove polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        redis_connection.lpop(f"{user}_init_polling")
+        redis_connection.delete(f"{user}_init_polling")
+
+def get_user_results(redis_connection, user):
+    """Get polling result for user"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        bytes_list = redis_connection.lrange(f"{user}_init_polling", 0, -1)
+        result = [int(x) for x in bytes_list]
+        return result
