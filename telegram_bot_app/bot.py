@@ -7,7 +7,6 @@ import redis
 
 from aiogram import Bot, Dispatcher, executor, types
 import json
-from typing import cast
 
 # Local imports
 import msgs
@@ -99,55 +98,74 @@ async def callback_query(call):
     data = json.loads(call.data)
     chat_id = call['message']['chat']['id']
     message_id = call['message']['message_id']
-    keyboard = call['message']['reply_markup']['inline_keyboard']
-    selected = [
-        json.loads(button[0]['callback_data']).get('selected', 0)
-        for button in keyboard
-    ]
-    max_selected = max(selected)
-    if data['type'] == 'answer':
-        if max_selected >= 6:
-            return
-        key = data['key']
-        new_button = keyboard[key][0]
-        callback_data = json.loads(new_button['callback_data'])
-        if callback_data['selected'] > 0:
-            return
-        new_button['text'] = f'({max_selected + 1})  ' + new_button['text']
-        callback_data['selected'] = max_selected + 1
-        new_button['callback_data'] = json.dumps(callback_data)
-        keyboard[key][0] = new_button
-        keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
-        await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
-    elif data['type'] == 'clear':
-        new_keyboard = []
-        for button in keyboard:
-            button[0]['text'] = button[0]['text'].split(') ')[-1]
-            callback_data = json.loads(button[0]['callback_data'])
-            if callback_data.get('selected', 0) > 0:
-                callback_data['selected'] = 0
-                button[0]['callback_data'] = json.dumps(callback_data)
-            new_keyboard.append(button)
-        keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-        await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
-    elif data['type'] == 'ok':
-        if max_selected < 6:
-            return
-        result = [(key, val) for key, val in enumerate(selected) if val != 0]
-        result.sort(key=lambda x: x[1])
-        username = call['from']['username']
-        database_user_key = f"{username}"
-        result_to_save = [val[0] for val in result]
-        redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
-        logging.info(f"User with nickname {username} finished the poll. Result: {result}")
-        print(f"User with nickname {username} finished the poll. Result: {result}")
-        await bot.send_message(chat_id, msgs.after_poll_msg)
+    if data['type'].startswith('poll_'):
+        keyboard = call['message']['reply_markup']['inline_keyboard']
+        selected = [
+            json.loads(button[0]['callback_data']).get('selected', 0)
+            for button in keyboard
+        ]
+        max_selected = max(selected)
+        if data['type'] == 'poll_answer':
+            if max_selected >= 6:
+                return
+            key = data['key']
+            new_button = keyboard[key][0]
+            callback_data = json.loads(new_button['callback_data'])
+            if callback_data['selected'] > 0:
+                return
+            new_button['text'] = f'({max_selected + 1})  ' + new_button['text']
+            callback_data['selected'] = max_selected + 1
+            new_button['callback_data'] = json.dumps(callback_data)
+            keyboard[key][0] = new_button
+            keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+            await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
+        elif data['type'] == 'poll_clear':
+            new_keyboard = []
+            for button in keyboard:
+                button[0]['text'] = button[0]['text'].split(') ')[-1]
+                callback_data = json.loads(button[0]['callback_data'])
+                if callback_data.get('selected', 0) > 0:
+                    callback_data['selected'] = 0
+                    button[0]['callback_data'] = json.dumps(callback_data)
+                new_keyboard.append(button)
+            keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+            await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
+        elif data['type'] == 'poll_ok':
+            if max_selected < 6: # we need to change it to 3. And maybe then add to 6 if lower than 6.
+                return
+            result = [(key, val) for key, val in enumerate(selected) if val != 0]
+            result.sort(key=lambda x: x[1])
+            username = call['from']['username']
+            database_user_key = f"{username}"
+            result_to_save = [val[0] for val in result]
+            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
+            logging.info(f"User with nickname {username} finished the poll. Result: {result}")
+            print(f"User with nickname {username} finished the poll. Result: {result}")
+            await bot.send_message(chat_id, msgs.after_poll_msg)
     elif data['type'] == 'steps':
         if data['step'] == 0:
             await bot.send_message(chat_id, msgs.poll_msg, reply_markup=msgs.poll)
 
-### ADD YOUR ENDPOINTS HERE ###
+@dp.message_handler(commands=['group_1'])
+async def create_groups_of_different(message):
+    '''
+    Admin command.
+    Cluster all users into groups of different users, send each of them their group number.
+    '''
+    pass
 
+@dp.message_handler(commands=['group_2'])
+async def create_groups_of_similar(message):
+    '''
+    Admin command.
+    Cluster all users into groups of similar users, send each of them their group number.
+    '''
+    pass
+
+@dp.message_handler(commands=['/changeteamto'])
+async def change_team(message):
+    '''Changes user's team to group N'''
+    pass
 
 @dp.message_handler(commands=['show_results'])
 async def show_results(message):

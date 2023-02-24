@@ -49,7 +49,7 @@ answers = [
 btns = [
     InlineKeyboardButton(
         btn,
-        callback_data=json.dumps({'type': 'answer', 'key': key, 'selected': 0})
+        callback_data=json.dumps({'type': 'poll_answer', 'key': key, 'selected': 0})
     )
     for key, btn in enumerate(answers)
 ]
@@ -57,8 +57,8 @@ btns = [
 poll = InlineKeyboardMarkup(row_width=1).add(
     *btns
 ).row(
-    InlineKeyboardButton(text='Clear', callback_data=json.dumps({'type': 'clear'})),
-    InlineKeyboardButton(text='Send', callback_data=json.dumps({'type': 'ok'})),
+    InlineKeyboardButton(text='Clear', callback_data=json.dumps({'type': 'poll_clear'})),
+    InlineKeyboardButton(text='Send', callback_data=json.dumps({'type': 'poll_ok'})),
 )
 
 def go_next_btn(step: int) -> InlineKeyboardMarkup:
