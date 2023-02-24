@@ -131,7 +131,7 @@ async def callback_query(call):
         keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
         await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
     elif data['type'] == 'ok':
-        if max_selected < 3:
+        if max_selected < 6:
             return
         result = [(key, val) for key, val in enumerate(selected) if val != 0]
         result.sort(key=lambda x: x[1])
