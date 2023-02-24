@@ -201,7 +201,7 @@ async def callback_query(call):
             user_chat_id = redis_tools.get_user_chat_id(redis_connection, user)
             if user_chat_id:
                 await bot.send_message(
-                    user_chat_id, 'Choose 3 variants', reply_markup=variants_keyboard
+                    user_chat_id, msgs.poll_2_msg, reply_markup=variants_keyboard
                 )
     elif data['type'].startswith('poll2_'):
         keyboard = call['message']['reply_markup']['inline_keyboard']
