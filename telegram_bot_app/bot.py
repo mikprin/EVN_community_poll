@@ -140,7 +140,7 @@ async def callback_query(call):
             username = call['from']['username']
             database_user_key = f"{username}"
             result_to_save = [val[0] for val in result]
-            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save, key='second')
+            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
             logging.info(f"User with nickname {username} finished the poll. Result: {result}")
             print(f"User with nickname {username} finished the poll. Result: {result}")
             await bot.send_message(chat_id, msgs.after_poll_msg)
@@ -236,7 +236,7 @@ async def callback_query(call):
             username = call['from']['username']
             database_user_key = f"{username}"
             result_to_save = [val[0] for val in result]
-            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
+            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save, key='second')
             logging.info(f"User with nickname {username} finished the poll. Result: {result}")
             print(f"User with nickname {username} finished the poll 2. Result: {result}")
             await bot.send_message(chat_id, msgs.after_poll_msg)
