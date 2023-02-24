@@ -58,16 +58,26 @@ def get_user_results(redis_connection, user):
         return result
     
 def add_variant(redis_connection, variant, collection):
-    """Add user to redis"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         redis_connection.rpush(collection, variant)
         
 def get_variants(redis_connection):
-    """Get polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         res = [ x.decode("utf-8") for x in redis_connection.lrange(VARIANTS, 0, -1)]
         return res
-    
+
+def save_final_variants(redis_connection, variants: list[str]):
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        if not redis_connection.exists("final_variants"):
+            redis_connection.delete("final_variants")
+        for i in variants:
+            redis_connection.rpush("final_variants", i)
+            
+def get_final_variants(redis_connection):
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        res = [ x.decode("utf-8") for x in redis_connection.lrange("final_variants", 0, -1)]
+        return res
+
 def get_all_poll_results(redis_connection):
     """Get all polling results"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:

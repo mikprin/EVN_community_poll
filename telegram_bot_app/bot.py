@@ -169,6 +169,7 @@ async def callback_query(call):
                 for btn in keyboard
                 if json.loads(btn[0]['callback_data']).get('selected', False)
             ]
+            redis_tools.save_final_variants(redis_connection, selected)
             await bot.send_message(
                 chat_id,
                 'Done!\nSend poll with variants to everyone?',
@@ -178,7 +179,8 @@ async def callback_query(call):
                 }]])
             )
     elif data['type'] == 'broadcast_poll_2':
-        pass
+        variants = redis_tools.get_final_variants(redis_connection)
+        await bot.send_message(chat_id, str(variants))
 
 @dp.message_handler(commands=['group_1'])
 async def create_groups_of_different(message):
