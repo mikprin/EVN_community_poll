@@ -191,7 +191,7 @@ async def callback_query(call):
             user_chat_id = redis_tools.get_user_chat_id(redis_connection, user)
             if user_chat_id:
                 await bot.send_message(
-                    user_chat_id, 'Choose variants', reply_markup=variants_keyboard
+                    user_chat_id, 'Choose 3 variants', reply_markup=variants_keyboard
                 )
         #await bot.send_message(
         #    chat_id, 'Choose variants', reply_markup=variants_keyboard
@@ -346,7 +346,15 @@ async def show_results(message):
     poll_results = redis_tools.get_user_results(redis_connection, database_user_key)
     await message.reply(str(poll_results))
 
+@dp.message_handler(commands=['clear_all'])
+async def clear_all(message):
+    print(message)
+    await message.reply('Did it')
+    keys = redis_connection.keys('*')
+    redis_connection.delete(*keys)
+
 # Start the bot
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
+    
