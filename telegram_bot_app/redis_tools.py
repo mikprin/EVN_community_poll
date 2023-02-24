@@ -39,6 +39,8 @@ def delete_interactions(redis_connection, user):
 def save_polling_result(redis_connection, user, result: list[int]):
     """Save polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        if not redis_connection.exists(f"{user}_init_polling"):
+            redis_connection.delete(f"{user}_init_polling")
         for i in result:
             redis_connection.rpush(f"{user}_init_polling", i)
 
