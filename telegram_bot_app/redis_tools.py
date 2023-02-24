@@ -12,12 +12,33 @@ def add_user_to_group(redis_connection, user, collection):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         redis_connection.rpush(collection, user)
 
+def get_all_users(redis_connection):
+    """Get all users from redis"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        res = [ x.decode("utf-8") for x in redis_connection.lrange(ALL_USERS, 0, -1)]
+    return res
+
 def check_if_user_exists(redis_connection, user, collection):
     """Check if user exists in redis"""
     lst = [ x.decode("utf-8") for x in redis_connection.lrange(ALL_USERS, 0, -1)]
     if user in lst:
         return True
     return False
+
+def save_user_chat_id(redis_connection, user, chat_id):
+    """Save user chat id in redis"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.set(f"{user}_chat_id", chat_id)
+
+def get_user_chat_id(redis_connection, user):
+    """Get user chat id from redis"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        res = redis_connection.get(f"{user}_chat_id")
+        if res:
+            chat_id = int(res.decode("utf-8"))
+            return chat_id
+        else:
+            return None
 
 def remove_user_from_group(redis_connection, user, collection):
     """Remove user from redis"""
@@ -64,11 +85,11 @@ def add_variant(redis_connection, variant, collection):
 def get_variants(redis_connection):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         res = [ x.decode("utf-8") for x in redis_connection.lrange(VARIANTS, 0, -1)]
-        return res
+    return res
 
 def save_final_variants(redis_connection, variants: list[str]):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        if not redis_connection.exists("final_variants"):
+        if redis_connection.exists("final_variants"):
             redis_connection.delete("final_variants")
         for i in variants:
             redis_connection.rpush("final_variants", i)

@@ -87,10 +87,11 @@ def broadcast():
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message):
     user_info = get_user_info(message)
+    chat_id = message.chat.id
     database_user_key = f"{user_info['user_username']}".strip()
     if not redis_tools.check_if_user_exists(redis_connection, database_user_key, redis_tools.ALL_USERS):
         redis_tools.add_user_to_group(redis_connection, database_user_key, redis_tools.ALL_USERS)
-
+        redis_tools.save_user_chat_id(redis_connection, database_user_key, chat_id)
     logging.info(f"User with nickname {user_info['user_username']} started the bot.")
     await message.reply(msgs.welcome_msg)
     await message.reply(msgs.values, reply_markup=msgs.go_next_btn(0))
@@ -188,7 +189,8 @@ async def create_groups_of_different(message):
     Admin command.
     Cluster all users into groups of different users, send each of them their group number.
     '''
-    pass
+    usernames = redis_tools.get_users(redis_connection)
+    await message.reply('All users: ' + ', '.join(usernames))
 
 @dp.message_handler(commands=['group_2'])
 async def create_groups_of_similar(message):
