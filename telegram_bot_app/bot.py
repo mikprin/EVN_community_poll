@@ -268,7 +268,7 @@ async def create_groups_of_different(message):
     num_of_users = len(users.keys())
     
     # Users per group
-    humans_per_group = 3
+    humans_per_group = 4
     
     target_groups = int(num_of_users/humans_per_group)
     # num_of_clusters = target_groups * humans_per_group
@@ -302,6 +302,42 @@ async def create_groups_of_different(message):
         await bot.send_message(chat_id, f'Ваш кластер: {group_number}')
     
     await message.reply('Users notified about their group number.')
+
+@dp.message_handler(commands=['group_2'])
+async def create_groups_of_different(message):
+    if not is_admin(message):
+        await message.reply('You Shall Not Pass Here!')
+        return
+    poll_collection = "second"
+    users = redis_tools.get_all_poll_results(redis_connection, collection=poll_collection)
+    
+    await message.reply(f'All users answers:\n {users}\n starting clustering...')
+    num_of_users = len(users.keys())
+    # Users per group
+    humans_per_group = 5
+    target_groups = int(num_of_users/humans_per_group)
+    num_of_clusters = target_groups * 2
+    await message.reply(f'Number of users: {num_of_users}\nTarget groups: {target_groups}\n\
+        humans per group: {humans_per_group}\n\
+        Number of clusters: {num_of_clusters}')
+    cluster_assignments = magic.cluster_vectors(list(users.values()), num_of_clusters)
+    clustered_users = magic.cluster_users(users, num_of_clusters)
+    user_clusters = magic.create_user_clusters(users, num_of_clusters)    
+    await message.reply(f'User clusters for second poll: {user_clusters}')
+    await message.reply(f'Int results:\n{ magic.print_clusters(list(users.values()),cluster_assignments , print_flag = False )}')
+    
+    sorted_users = clustered_users.copy()    
+    for user in sorted_users:
+        redis_tools.save_user_group(redis_connection, user, sorted_users[user], redis_tools.FIRST_POLL)
+    # Send messages to users with their group number
+    
+    for user in sorted_users:
+        group_number = sorted_users[user]
+        chat_id = redis_tools.get_user_chat_id(redis_connection, user)
+        await bot.send_message(chat_id, f'Ваш кластер для второго обсуждения: {group_number}')
+    
+    await message.reply('Users notified about their group number. For second poll.')
+    
 
 @dp.message_handler(commands=['notify_groups__poll_1'])
 async def notify_group_1(message):
