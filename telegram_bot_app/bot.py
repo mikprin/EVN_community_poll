@@ -71,7 +71,7 @@ def get_user_info(message):
 # Telegram bot
 telegram_token = os.getenv("TELEGRAM_API_KEY")
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 # Initialize bot and dispatcher
 
