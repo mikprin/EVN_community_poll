@@ -77,10 +77,10 @@ def remove_user_results(redis_connection, user):
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
         redis_connection.delete(f"{user}_init_polling")
 
-def get_user_results(redis_connection, user):
+def get_user_results(redis_connection, user, key: str = 'init'):
     """Get polling result for user"""
     with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
-        bytes_list = redis_connection.lrange(f"{user}_init_polling", 0, -1)
+        bytes_list = redis_connection.lrange(f"{user}_{key}_polling", 0, -1)
         result = [int(x) for x in bytes_list]
         return result
     

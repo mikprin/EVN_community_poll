@@ -302,6 +302,17 @@ async def create_groups_of_different(message):
     if not is_admin(message):
         await message.reply('You Shall Not Pass Here!')
         return
+    
+    
+    # Parsing message
+    # text = message.text
+    # text.replace('/group_2', '')
+    # try:
+    #     num_of_clusters = int(text)
+    # except:
+    #     num_of_clusters = target_groups * 3
+    
+    
     poll_collection = "second"
     users = redis_tools.get_all_poll_results(redis_connection, collection=poll_collection)
     
@@ -310,7 +321,7 @@ async def create_groups_of_different(message):
     # Users per group
     humans_per_group = 5
     target_groups = int(num_of_users/humans_per_group)
-    num_of_clusters = target_groups * 2
+    num_of_clusters = target_groups * 3
     await message.reply(f'Number of users: {num_of_users}\nTarget groups: {target_groups}\n\
         humans per group: {humans_per_group}\n\
         Number of clusters: {num_of_clusters}')
