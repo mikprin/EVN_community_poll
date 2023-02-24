@@ -145,6 +145,21 @@ async def callback_query(call):
     elif data['type'] == 'steps':
         if data['step'] == 0:
             await bot.send_message(chat_id, msgs.poll_msg, reply_markup=msgs.poll)
+    elif data['type'].startswith('variant_'):
+        keyboard = call['message']['reply_markup']['inline_keyboard']
+        if data['type'] == 'variant_switch':
+            key = data['variant']
+            btn_to_switch = keyboard[key][0]
+            btn_data = json.loads(btn_to_switch['callback_data'])
+            btn_data['selected'] = not btn_data['selected']
+            if btn_data['selected']:
+                btn_to_switch['text'] = '✅ '  +btn_to_switch['text']
+            else:
+                btn_to_switch['text'] = btn_to_switch['text'].removeprefix('✅ ')
+            btn_to_switch['callback_data'] = json.dumps(btn_data)
+            keyboard[key][0] = btn_to_switch
+            keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+            await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
 
 @dp.message_handler(commands=['group_1'])
 async def create_groups_of_different(message):
@@ -165,6 +180,37 @@ async def create_groups_of_similar(message):
 @dp.message_handler(commands=['/changeteamto'])
 async def change_team(message):
     '''Changes user's team to group N'''
+    pass
+
+@dp.message_handler(commands=['add_variant'])
+async def add_variant(message):
+    print(message)
+    variant = message['text'].removeprefix('/add_variant').strip()
+    redis_tools.add_variant(redis_connection, variant, redis_tools.VARIANTS)
+    await message.reply('Got it')
+
+@dp.message_handler(commands=['get_variants'])
+async def get_variants(message):
+    '''Admin command'''
+    variants = redis_tools.get_variants(redis_connection)
+    await message.reply(
+        'Select final variants',
+        reply_markup=types.InlineKeyboardMarkup(
+            inline_keyboard=[
+                [{
+                    'text': item,
+                    'callback_data': json.dumps({
+                        'type': 'variant_switch',
+                        'variant': key,
+                        'selected': False
+                    })
+                }]
+                for key, item in enumerate(variants)
+            ]
+        )
+    )
+
+def broadcast():
     pass
 
 @dp.message_handler(commands=['show_results'])

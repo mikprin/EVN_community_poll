@@ -2,6 +2,7 @@ import time,logging
 
 # Defines
 ALL_USERS = "_telegram_users_"
+VARIANTS = "_variants_"
 GLOBAL_DATABASE_LOCK = "_global_database_lock_"
 INTERACTION_TIMEOUT = 172800
 
@@ -55,3 +56,14 @@ def get_user_results(redis_connection, user):
         bytes_list = redis_connection.lrange(f"{user}_init_polling", 0, -1)
         result = [int(x) for x in bytes_list]
         return result
+    
+def add_variant(redis_connection, variant, collection):
+    """Add user to redis"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        redis_connection.rpush(collection, variant)
+        
+def get_variants(redis_connection):
+    """Get polling result for user"""
+    with redis_connection.lock(GLOBAL_DATABASE_LOCK, blocking=True , timeout=10) as lock:
+        res = [ x.decode("utf-8") for x in redis_connection.lrange(VARIANTS, 0, -1)]
+        return res
