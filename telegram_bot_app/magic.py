@@ -32,6 +32,24 @@ def calculate_distances(p1,p2):
         distance += distances[i] * penalties[i]
     return distance
 
+
+
+
+def calculate_distance_vector_list(p1, p_list):
+    '''Calculate distance between a list and a vector'''
+    distances = []
+    for p2 in p_list:
+        distances.append(calculate_distances(p1, p2))
+    # Average distance
+    distance = sum(distances) / len(distances)
+    return distance
+
+def get_vectors_from_users(users_subset):
+    vectors = []
+    for user in users_subset:
+        vectors.append(users[user])
+    return vectors
+
 def cluster_vectors(vectors, clusters):
     
     # Define number of clusters
