@@ -19,6 +19,10 @@ logger = logging.getLogger()
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.DEBUG)
 
+ADMINS = ['rabarbrablad', 'Miksolo', 'wogger']
+
+def is_admin(message):
+    return(message.from_user.username in ADMINS)
 
 # Importing settings and environment variables
 
@@ -244,6 +248,9 @@ async def create_groups_of_different(message):
     Admin command.
     Cluster all users into groups of different users, send each of them their group number.
     '''
+    if not is_admin(message):
+        await message.reply('You Shall Not Pass Here!')
+        return
     usernames = redis_tools.get_all_users(redis_connection)
     # await message.reply('All users: ' + ', '.join(usernames))
 
@@ -294,7 +301,9 @@ async def create_groups_of_similar(message):
     Admin command.
     Cluster all users into groups of similar users, send each of them their group number.
     '''
-    pass
+    if not is_admin(message):
+        await message.reply('You Shall Not Pass Here!')
+        return
 
 @dp.message_handler(commands=['/changeteamto'])
 async def change_team(message):
@@ -311,6 +320,9 @@ async def add_variant(message):
 @dp.message_handler(commands=['get_variants'])
 async def get_variants(message):
     '''Admin command'''
+    if not is_admin(message):
+        await message.reply('You Shall Not Pass Here!')
+        return
     variants = redis_tools.get_variants(redis_connection)
     await message.reply(
         'Select final variants',
@@ -345,6 +357,9 @@ async def show_results(message):
 
 @dp.message_handler(commands=['clear_all'])
 async def clear_all(message):
+    if not is_admin(message):
+        await message.reply('You Shall Not Pass Here!')
+        return
     print(message)
     await message.reply('Did it')
     keys = redis_connection.keys('*')
