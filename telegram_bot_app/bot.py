@@ -182,7 +182,11 @@ async def callback_query(call):
             )
     elif data['type'] == 'broadcast_poll_2':
         variants = redis_tools.get_final_variants(redis_connection)
-        await bot.send_message(chat_id, str(variants))
+        users = redis_tools.get_all_users(redis_connection)
+        for user in users:
+            user_chat_id = redis_tools.get_user_chat_id(redis_connection, user)
+            if user_chat_id:
+                await bot.send_message(user_chat_id, str(variants) + ' ' + str(users))
 
 @dp.message_handler(commands=['group_1'])
 async def create_groups_of_different(message):
