@@ -80,9 +80,6 @@ bot = Bot(token=telegram_token)
 
 dp = Dispatcher(bot)
 
-def broadcast():
-    pass
-
 # Ready to describe the endpoints
 
 @dp.message_handler(commands=['start', 'help'])
@@ -143,7 +140,7 @@ async def callback_query(call):
             username = call['from']['username']
             database_user_key = f"{username}"
             result_to_save = [val[0] for val in result]
-            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
+            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save, key='second')
             logging.info(f"User with nickname {username} finished the poll. Result: {result}")
             print(f"User with nickname {username} finished the poll. Result: {result}")
             await bot.send_message(chat_id, msgs.after_poll_msg)
@@ -183,11 +180,67 @@ async def callback_query(call):
     elif data['type'] == 'broadcast_poll_2':
         variants = redis_tools.get_final_variants(redis_connection)
         users = redis_tools.get_all_users(redis_connection)
+        variants_keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [{'text': variant, 'callback_data': json.dumps({'type': 'poll2_choice', 'key': key, 'selected': 0})}]
+            for key, variant in enumerate(variants)
+        ]).row(
+            types.InlineKeyboardButton(text='Clear', callback_data=json.dumps({'type': 'poll2_clear'})),
+            types.InlineKeyboardButton("Send", callback_data=json.dumps({'type': 'poll2_ok'}))
+        )
         for user in users:
             user_chat_id = redis_tools.get_user_chat_id(redis_connection, user)
             if user_chat_id:
-                await bot.send_message(user_chat_id, str(variants) + ' ' + str(users))
-
+                await bot.send_message(
+                    user_chat_id, 'Choose variants', reply_markup=variants_keyboard
+                )
+        #await bot.send_message(
+        #    chat_id, 'Choose variants', reply_markup=variants_keyboard
+        #)
+    elif data['type'].startswith('poll2_'):
+        keyboard = call['message']['reply_markup']['inline_keyboard']
+        selected = [
+            json.loads(button[0]['callback_data']).get('selected', 0)
+            for button in keyboard
+        ]
+        max_selected = max(selected)
+        if data['type'] == 'poll2_choice':
+            if max_selected >= 3:
+                return
+            key = data['key']
+            new_button = keyboard[key][0]
+            callback_data = json.loads(new_button['callback_data'])
+            if callback_data['selected'] > 0:
+                return
+            new_button['text'] = f'({max_selected + 1})  ' + new_button['text']
+            callback_data['selected'] = max_selected + 1
+            new_button['callback_data'] = json.dumps(callback_data)
+            keyboard[key][0] = new_button
+            keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+            await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
+        elif data['type'] == 'poll2_clear':
+            new_keyboard = []
+            for button in keyboard:
+                button[0]['text'] = button[0]['text'].split(') ')[-1]
+                callback_data = json.loads(button[0]['callback_data'])
+                if callback_data.get('selected', 0) > 0:
+                    callback_data['selected'] = 0
+                    button[0]['callback_data'] = json.dumps(callback_data)
+                new_keyboard.append(button)
+            keyb_markup = types.InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+            await bot.edit_message_reply_markup(chat_id, message_id, reply_markup=keyb_markup)
+        elif data['type'] == 'poll2_ok':
+            if max_selected < 3:
+                return
+            result = [(key, val) for key, val in enumerate(selected) if val != 0]
+            result.sort(key=lambda x: x[1])
+            username = call['from']['username']
+            database_user_key = f"{username}"
+            result_to_save = [val[0] for val in result]
+            redis_tools.save_polling_result(redis_connection, database_user_key, result_to_save)
+            logging.info(f"User with nickname {username} finished the poll. Result: {result}")
+            print(f"User with nickname {username} finished the poll 2. Result: {result}")
+            await bot.send_message(chat_id, msgs.after_poll_msg)
+            
 @dp.message_handler(commands=['group_1'])
 async def create_groups_of_different(message):
     '''
